@@ -13,7 +13,12 @@ class App extends Component {
   state = {
     areas:[],
     hosts:[],
-    selectedHost:{id:null}
+    selectedHost:{id:null},
+    message:{
+      newMessage:false,
+      messageContent:"",
+      type:""
+    }
   }
   componentDidMount(){
     fetch("http://localhost:4000/areas").then(r=>r.json())
@@ -30,7 +35,15 @@ class App extends Component {
       })
     })
   }
-
+  createMessage = (content,type)=>{
+    this.setState({
+      message:{
+        newMessage:true,
+        messageContent:content,
+        type:type
+      }
+    })
+  }
   inActiveHosts = () => {
     return this.state.hosts.filter((host) => !host.active)
   }
@@ -52,23 +65,67 @@ class App extends Component {
       }
     })
     let newSelectedHost = newHosts.find((host)=>host.id===this.state.selectedHost.id)
-    this.setState({
-      hosts:newHosts,
-      selectedHost:newSelectedHost
-    })
+    if(newSelectedHost.active){
+      this.setState({
+        hosts:newHosts,
+        selectedHost:newSelectedHost
+      },this.createMessage(`Activated ${newSelectedHost.firstName}.`,"warn"))
+    }else {
+      this.setState({
+        hosts:newHosts,
+        selectedHost:newSelectedHost
+      },this.createMessage(`Decomissioned ${newSelectedHost.firstName}.`,"notify"))
+    }
+
+
   }
   changeHostArea = (newArea) =>{
+
+    let currentNumHostsInNewArea = this.state.hosts.filter(host=>host.area===newArea).length
+    let foundArea = this.state.areas.find(area=>area.name===newArea)
+    if (currentNumHostsInNewArea===foundArea.limit){
+      //createMessage
+      this.createMessage(`Too many hosts. Cannot add ${this.state.selectedHost.firstName} to ${newArea.replace(/_/g, ' ').split(" ").map((word)=>word.charAt(0).toUpperCase()+word.slice(1)).join(" ")}`,"error")
+    }else{
+      let newHosts = this.state.hosts.map((host)=>{
+        if (host.id===this.state.selectedHost.id){
+          return {...host,area: newArea}
+        }else{
+          return host
+        }
+      })
+      let newSelectedHost = newHosts.find((host)=>host.id===this.state.selectedHost.id)
+
+      this.setState({
+        hosts:newHosts,
+        selectedHost:newSelectedHost
+      },this.createMessage(`${newSelectedHost.firstName} set in area ${newSelectedHost.area.replace(/_/g, ' ').split(" ").map((word)=>word.charAt(0).toUpperCase()+word.slice(1)).join(" ")}`,"notify"))
+    }
+
+  }
+  massActivityChange = (active) => {
     let newHosts = this.state.hosts.map((host)=>{
-      if (host.id===this.state.selectedHost.id){
-        return {...host,area: newArea}
-      }else{
-        return host
-      }
+        return {...host,active:active}
     })
-    let newSelectedHost = newHosts.find((host)=>host.id===this.state.selectedHost.id)
+    if(this.state.selectedHost.id === null){
+      this.setState({
+        hosts:newHosts,
+      },this.createMessage( active ? `Activating all hosts`:"Decommissioning all hosts", active ? "warn":"notify"))
+    }else{
+      let newSelectedHost = newHosts.find((host)=>host.id===this.state.selectedHost.id)
+      this.setState({
+        hosts:newHosts,
+        selectedHost:newSelectedHost
+      },this.createMessage( active ? `Activating all hosts`:"Decommissioning all hosts", active ? "warn":"notify"))
+    }
+  }
+  readMessage= ()=>{
     this.setState({
-      hosts:newHosts,
-      selectedHost:newSelectedHost
+      ...this.state,
+      message:{
+        newMessage:false,
+        messageContent:""
+      }
     })
   }
   render(){
@@ -86,7 +143,10 @@ class App extends Component {
             selectedHost={this.state.selectedHost}
             handleActivation={this.handleActivation}
             changeHostArea={this.changeHostArea}
-            areas={this.state.areas}/>
+            areas={this.state.areas}
+            message={this.state.message}
+            readMessage={this.readMessage}
+            massActivityChange={this.massActivityChange}/>
       </Segment>
     )
   }

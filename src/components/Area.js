@@ -11,15 +11,15 @@ const Area = (props) => (
   </div>
 
 )
-
-Area.propTypes = {
-  hosts: function(props, propName, componentName){
-    if(props.hosts.length > props.limit){
-      throw Error(
-        `HEY!! You got too many hosts in ${props.name}. The limit for that area is ${props.limit}. You gotta fix that!`
-      )
-    }
-  }
-}
+// 
+// Area.propTypes = {
+//   hosts: function(props, propName, componentName){
+//     if(props.hosts.length > props.limit){
+//       throw Error(
+//         `HEY!! You got too many hosts in ${props.name}. The limit for that area is ${props.limit}. You gotta fix that!`
+//       )
+//     }
+//   }
+// }
 
 export default Area;

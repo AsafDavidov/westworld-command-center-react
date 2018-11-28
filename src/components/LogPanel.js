@@ -2,21 +2,28 @@ import React from 'react'
 import { Segment, Button } from 'semantic-ui-react';
 import { Log } from '../services/Log'
 
-const LogPanel = () => {
+const LogPanel = (props) => {
 
   const dummyLogs = () => {
-    // This is just to show you how this should work. But where should the log data actually get stored?
-    // And where should we be creating logs in the first place?
-    // Use the Log Service class (located in: 'src/services/Log') we've created anywhere you like.
-    // Just remember to import it
 
-    let logs = []
-
-    logs.unshift(Log.warn("This is an example of a warn log"))
-    logs.unshift(Log.notify("This is an example of a notify log"))
-    logs.unshift(Log.error("This is an example of an error log"))
-
+    let logs = [...props.logs]
+    if (!!props.message && props.message.newMessage){
+      if (props.message.type==="warn"){
+        logs.unshift(Log.warn(props.message.messageContent))
+      }else if (props.message.type==="notify") {
+        logs.unshift(Log.notify(props.message.messageContent))
+      }else if (props.message.type==="error"){
+        logs.unshift(Log.error(props.message.messageContent))
+      }
+      props.readMessage()
+      props.updateLogs(logs)
+    }
     return logs
+  }
+
+  const handleActivationAll = () => {
+    props.massActivityChange(props.activateAll)
+    props.changeActivationAll()
   }
 
   return(
@@ -24,17 +31,18 @@ const LogPanel = () => {
       <pre>
         {dummyLogs().map((log, i) => <p key={i} className={log.type}>{log.msg}</p>)}
       </pre>
-      
-      {/* Button below is the Activate All/Decommisssion All button */}
+
       <Button
         fluid
-        color={"red"}
-        {/* This isn't always going to be the same color...*/}
-        content={"ACTIVATE ALL"}
-        {/* Should the button always read "ACTIVATE ALL"? When should it read "DECOMMISSION ALL"? */}
+        color={props.activateAll ? "red" : "green"}
+        content={props.activateAll ? "ACTIVATE ALL" : "DECOMMISSION ALL"}
+        onClick={handleActivationAll}
+
       />
     </Segment>
   )
 }
 
 export default LogPanel
+//{/* This isn't always going to be the same color...*/}
+//{/* Should the button always read "ACTIVATE ALL"? When should it read "DECOMMISSION ALL"? */}
